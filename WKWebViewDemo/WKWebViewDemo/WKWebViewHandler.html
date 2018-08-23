@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+         <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+            <script language="javascript">
+
+            //JS执行window.webkit.messageHandlers.NativeMethod.postMessage(<messageBody>)
+            function shareClick() {
+                alert("这是js的alert"); window.webkit.messageHandlers.NativeMethod.postMessage({type:'share',url:'https://github.com/Daintly/DYKit.git'});
+            }
+            
+            
+            function Click() {
+  window.webkit.messageHandlers.NativeMethod.postMessage({type:'shareimg',title:'分享的标题',url:'https://github.com/Daintly/DYKit.git'});
+            }
+                </script>
+            </head>
+    
+    <body>
+        <h1>这是分享</h1>
+        <input type="button" value="分享" onclick="shareClick()">
+        <h2>这是图片</h2>
+        <img src="http://img3.imgtn.bdimg.com/it/u=2074347735,1431926796&fm=26&gp=0.jpg" onclick="Click()" alt="分享二维码" />
+      
+
+    
+
+</body></html>
