@@ -65,52 +65,82 @@ form.submit();\
     [self.webView addObserver:self forKeyPath:@"title" options:NSKeyValueObservingOptionNew context:NULL];
     
     [self.webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:NULL];
+    NSString *htmlPath = [[NSBundle mainBundle] pathForResource:@"WKWebViewHandler" ofType:@"html"];
+    NSString *fileURL = [NSString stringWithContentsOfFile:htmlPath encoding:NSUTF8StringEncoding error:nil];
+    [self.webView loadHTMLString:fileURL baseURL:nil];
     
-//    NSString *htmlPath = [[NSBundle mainBundle] pathForResource:@"WKWebViewHandler" ofType:@"html"];
-//    NSString *fileURL = [NSString stringWithContentsOfFile:htmlPath encoding:NSUTF8StringEncoding error:nil];
-//  //  [self.webView loadHTMLString:fileURL baseURL:nil];
-//
-//    NSURLRequest *request = [[NSURLRequest alloc]initWithURL:[NSURL URLWithString:@"https://www.jianshu.com/p/d3c8ba672760"] cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:15];
-//    [self.webView loadRequest:request];
-//    UIBarButtonItem * item = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(cleanCache)];
-//    self.navigationItem.leftBarButtonItem = item;
-//
-//    [[NSUserDefaults standardUserDefaults] setObject:@"1" forKey:@"user"];
-//    [[NSUserDefaults standardUserDefaults] synchronize];
+    //    NSURLRequest *request = [[NSURLRequest alloc]initWithURL:[NSURL URLWithString:@"https://www.jianshu.com/p/d3c8ba672760"] cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:15];
+    //    [self.webView loadRequest:request];
+    UIBarButtonItem * item = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(cleanCache)];
+    self.navigationItem.leftBarButtonItem = item;
 }
 
-/*清除缓存测试中
+
+/*清除缓存*/
 - (void)cleanCache{
     
-    // 清除所有
-    NSSet *websiteDataTypes = [WKWebsiteDataStore allWebsiteDataTypes];
-    //// Date from
-    NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
-    //// Execute
-    [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:dateFrom completionHandler:^{
-        // Done
-        NSLog(@"清楚缓存完毕");
-
-        NSString *libraryDir = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,NSUserDomainMask, YES)[0];
-        NSString *bundleId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
-        //内存
+    if ([UIDevice currentDevice].systemVersion.intValue >=9.0f) {
+        
+        // 清除自定义缓存
+        NSSet *websiteDataTypes = [NSSet setWithArray:@[//        在磁盘缓存上。
+                                                        WKWebsiteDataTypeDiskCache,
+                                                        //
+                                                        //        html离线Web应用程序缓存。
+                                                        WKWebsiteDataTypeOfflineWebApplicationCache,
+                                                        
+                                                        //        内存缓存。
+                                                        WKWebsiteDataTypeMemoryCache,
+                                                        
+                                                        //        本地存储。
+                                                        WKWebsiteDataTypeLocalStorage,
+                                                        
+                                                        //        Cookies
+                                                        WKWebsiteDataTypeCookies,
+                                                        //
+                                                        //        会话存储
+                                                        WKWebsiteDataTypeSessionStorage,
+                                                        //
+                                                        //        IndexedDB数据库。
+                                                        WKWebsiteDataTypeIndexedDBDatabases,
+                                                        //
+                                                        //        查询数据库。
+                                                        WKWebsiteDataTypeWebSQLDatabases]];
+        
+        //  NSSet *websiteDataTypes = [WKWebsiteDataStore allWebsiteDataTypes]; 清除所有
+        
+        NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
+        
+        [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:dateFrom completionHandler:^{
+            NSLog(@"清楚缓存完毕,但是调用这个方法始终残留");
+            
+        }];
+        
+    }else{
+        
+        /* iOS7.0 .8.0 9.0WebView 清除通用方法*/
+        NSString *libraryDir = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,
+                                                                   NSUserDomainMask, YES)[0];
+        NSString *bundleId  =  [[[NSBundle mainBundle] infoDictionary]
+                                objectForKey:@"CFBundleIdentifier"];
         NSString *webkitFolderInLib = [NSString stringWithFormat:@"%@/WebKit",libraryDir];
-        //磁盘
-        NSString *webKitFolderInCaches = [NSString stringWithFormat:@"%@/Caches/%@/WebKit",libraryDir,bundleId];
+        NSString *webKitFolderInCaches = [NSString
+                                          stringWithFormat:@"%@/Caches/%@/WebKit",libraryDir,bundleId];
+        NSString *webKitFolderInCachesfs = [NSString
+                                            stringWithFormat:@"%@/Caches/%@/fsCachedData",libraryDir,bundleId];
         
-        NSLog(@"%ld  --- %ld",[NSString fileSizeAtPath:webkitFolderInLib] ,[NSString fileSizeAtPath:webKitFolderInCaches] );
-//        double filesize = [NSString getFileSize:webkitFolderInLib] + [NSString getFileSize:webKitFolderInCaches];
-     //   NSLog(@"%f",filesize);
+        NSError *error;
+        /* iOS8.0 WebView Cache的存放路径 */
+        [[NSFileManager defaultManager] removeItemAtPath:webKitFolderInCaches error:&error];
+        [[NSFileManager defaultManager] removeItemAtPath:webkitFolderInLib error:nil];
         
-    }];
+        /* iOS7.0 WebView Cache的存放路径 */
+        [[NSFileManager defaultManager] removeItemAtPath:webKitFolderInCachesfs error:&error];
+        
+    }
     
-    [[NSURLCache sharedURLCache] removeAllCachedResponses];
     
-   
-    
-
 }
- */
+
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation{
     // 此方法可以禁止长按图片弹出效果
     [self.webView evaluateJavaScript:@"document.documentElement.style.webkitTouchCallout='none';" completionHandler:nil];
